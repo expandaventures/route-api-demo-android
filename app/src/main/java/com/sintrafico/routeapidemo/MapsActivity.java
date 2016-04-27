@@ -80,7 +80,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         };
         try {
             // Register the listener with the Location Manager to receive location updates
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2 * 60 * 1000, 10, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 20 * 1000, 10, locationListener);
         } catch (SecurityException e){
             Log.e("MapsActivity", "Security Error " + e.toString());
         }
@@ -95,7 +95,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void updateRoute(LatLng start, LatLng end){
         RouteAPITask api = new RouteAPITask();
-        Builder b = new Builder();
         Builder builder = new Builder();
         builder.scheme("http")
                 .authority("api.sintrafico.com")
@@ -110,19 +109,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch(MalformedURLException e){
             Log.e("MapsActivity", "URL Error " + e.toString());
         }
-
     }
 
     private class RouteAPITask  extends AsyncTask<URL, Void, JSONObject> {
         protected JSONObject doInBackground(URL... urls) {
             int count = urls.length;
-            String json = "";
             for (int i = 0; i < count; i++) {
                 try {
                     HttpURLConnection con = (HttpURLConnection) urls[i].openConnection();
                     if (con.getResponseCode() == 201) { // Modo "poleo"
                         String response = readResponse(con);
-                        Log.i("RouteAPITask", "Result:" + response.toString());
+                        Log.i("RouteAPITask", "Result:" + response);
                     /*  TODO: volver a llamar el API hasta obtener respuesta 200
                         solo aplica para algunos requests, los requests en este Demo no lo necesitan.
                      */
@@ -154,6 +151,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 layer = new GeoJsonLayer(mMap, geometry);
                 layer.getDefaultLineStringStyle().setColor(Color.RED);
                 layer.addLayerToMap();
+                Double duration = routes.getJSONObject(0).getDouble("duration");
+                Double distance = routes.getJSONObject(0).getDouble("distance");
+                Log.i("RouteAPITask", "Route Duration: " + duration.toString() + "  Distance:"+ distance.toString());
             } catch (JSONException e) {
                 Log.e("RouteAPITask", "Error " + e.toString());
             }
@@ -162,9 +162,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         public String readResponse(HttpURLConnection connection) throws IOException{
             BufferedReader reader =  new BufferedReader(new InputStreamReader((connection.getInputStream())));
             StringBuilder sb = new StringBuilder();
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
+                sb.append(line);
             }
             return sb.toString();
         }
